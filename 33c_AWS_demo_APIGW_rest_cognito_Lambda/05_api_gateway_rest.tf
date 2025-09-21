@@ -17,9 +17,13 @@ data aws_iam_policy demo33c_apigw {
 }
 
 resource aws_iam_role demo33c_apigw {
-  name                = "demo33c_iam_for_apigw"
-  assume_role_policy  = data.aws_iam_policy_document.demo33c_apigw.json
-  managed_policy_arns = [ data.aws_iam_policy.demo33c_apigw.arn ]
+  name               = "demo33c_iam_for_apigw"
+  assume_role_policy = data.aws_iam_policy_document.demo33c_apigw.json
+}
+
+resource aws_iam_role_policy_attachment demo33c_apigw_cloudwatch {
+  role       = aws_iam_role.demo33c_apigw.name
+  policy_arn = data.aws_iam_policy.demo33c_apigw.arn
 }
 
 # -- CloudWatch Logs for API gateway
@@ -114,31 +118,3 @@ resource aws_lambda_permission demo33c {
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
   source_arn = "${aws_api_gateway_rest_api.demo33c.execution_arn}/*/*${aws_api_gateway_resource.demo33c_path1.path}"
 }
-
-output test_curl {
-  value = <<EOF
-You can test access to API with following command:
-
-curl -i ${aws_api_gateway_stage.demo33c_stage1.invoke_url}${aws_api_gateway_resource.demo33c_path1.path}
-
-This command should fail with error 401 (Unauthorized) as Cognito is enabled.
-
-You can generate an access token for Cognito user with following command:
-
-aws cognito-idp admin-initiate-auth \
-    --region ${var.aws_region} \
-    --client-id ${aws_cognito_user_pool_client.demo33c.id} \
-    --user-pool-id ${aws_cognito_user_pool.demo33c.id} \
-    --auth-flow ADMIN_NO_SRP_AUTH \
-    --auth-parameters USERNAME=${var.cognito_user_name},PASSWORD=${local.user_password}
-
-You can now use the IdToken seen in the response to access API with following commands:
-
-TOKEN=<value of IdToken>
-curl -i \
-    -H "Authorization: Bearer $TOKEN" \
-    ${aws_api_gateway_stage.demo33c_stage1.invoke_url}${aws_api_gateway_resource.demo33c_path1.path}
-
-EOF
-}
-

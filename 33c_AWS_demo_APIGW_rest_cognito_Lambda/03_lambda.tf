@@ -12,9 +12,13 @@ data aws_iam_policy_document demo33c_lambda {
 }
 
 resource aws_iam_role demo33c_lambda {
-  name                = "demo33c_iam_for_lambda"
-  assume_role_policy  = data.aws_iam_policy_document.demo33c_lambda.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  name               = "demo33c_iam_for_lambda"
+  assume_role_policy = data.aws_iam_policy_document.demo33c_lambda.json
+}
+
+resource aws_iam_role_policy_attachment demo33c_lambda_basic_execution {
+  role       = aws_iam_role.demo33c_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 data archive_file demo33c {
