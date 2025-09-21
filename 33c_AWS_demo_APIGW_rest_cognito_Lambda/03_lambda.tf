@@ -27,21 +27,28 @@ data archive_file demo33c {
   output_path = "lambda_function_payload.zip"
 }
 
+# -- CloudWatch Logs for Lambda function
+resource aws_cloudwatch_log_group demo33c_lambda {
+  name              = "/aws/lambda/${var.project_prefix}"
+  retention_in_days = var.cwlogs_retention_in_days
+}
+
+# -- Lambda function
 resource aws_lambda_function demo33c {
   # If the file is not in the current working directory you will need to include a
   # path.module in the filename.
   filename      = "lambda_function_payload.zip"
-  function_name = "demo33c"
+  function_name = var.project_prefix
   role          = aws_iam_role.demo33c_lambda.arn
   handler       = "lambda.lambda_handler"
 
   source_code_hash = data.archive_file.demo33c.output_base64sha256
 
-  runtime = "python3.11"
+  runtime = var.lambda_runtime
 
-  environment {
-    variables = {
-      foo = "bar"
-    }
-  }
+  # environment {
+  #   variables = {
+  #     foo = "bar"
+  #   }
+  # }
 }

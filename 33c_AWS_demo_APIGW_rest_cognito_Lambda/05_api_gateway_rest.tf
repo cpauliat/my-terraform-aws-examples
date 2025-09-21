@@ -26,16 +26,21 @@ resource aws_iam_role_policy_attachment demo33c_apigw_cloudwatch {
   policy_arn = data.aws_iam_policy.demo33c_apigw.arn
 }
 
+# -- API Gateway Account (required for CloudWatch logging)
+resource aws_api_gateway_account demo33c {
+  cloudwatch_role_arn = aws_iam_role.demo33c_apigw.arn
+}
+
 # -- CloudWatch Logs for API gateway
 resource aws_cloudwatch_log_group demo33c_apigw {
-  name              = "/aws/apigateway/demo33c"
-  retention_in_days = 14
+  name              = "/aws/apigateway/${var.project_prefix}"
+  retention_in_days = var.cwlogs_retention_in_days
 }
 
 # -- REST API
 resource aws_api_gateway_rest_api demo33c {
   description = "demo33c API Gateway"
-  name = "demo33c"
+  name = var.project_prefix
   endpoint_configuration {
     types = ["REGIONAL"]
   }
@@ -59,6 +64,36 @@ resource aws_api_gateway_method proxy {
 
 }
 
+resource aws_api_gateway_integration lambda_integration {
+  rest_api_id = aws_api_gateway_rest_api.demo33c.id
+  resource_id = aws_api_gateway_resource.demo33c_path1.id
+  http_method = aws_api_gateway_method.proxy.http_method
+  integration_http_method = "POST"
+  type        = "AWS_PROXY"
+  uri         = aws_lambda_function.demo33c.invoke_arn
+}
+
+# -- not needed if using AWS_PROXY
+
+# resource aws_api_gateway_method_response proxy {
+#   rest_api_id = aws_api_gateway_rest_api.demo33c.id
+#   resource_id = aws_api_gateway_resource.demo33c_path1.id
+#   http_method = aws_api_gateway_method.proxy.http_method
+#   status_code = "200"
+# }
+
+# resource aws_api_gateway_integration_response proxy {
+#   rest_api_id = aws_api_gateway_rest_api.demo33c.id
+#   resource_id = aws_api_gateway_resource.demo33c_path1.id
+#   http_method = aws_api_gateway_method.proxy.http_method
+#   status_code = aws_api_gateway_method_response.proxy.status_code
+
+#   depends_on = [
+#     aws_api_gateway_method.proxy,
+#     aws_api_gateway_integration.lambda_integration
+#   ]
+# }
+
 # -- authorizer for Cognito user pool
 resource aws_api_gateway_authorizer demo33c {
   name          = "demo33c_apigw_authorizer"
@@ -67,46 +102,36 @@ resource aws_api_gateway_authorizer demo33c {
   provider_arns = [aws_cognito_user_pool.demo33c.arn]
 }
 
-resource aws_api_gateway_integration lambda_integration {
-  rest_api_id = aws_api_gateway_rest_api.demo33c.id
-  resource_id = aws_api_gateway_resource.demo33c_path1.id
-  http_method = aws_api_gateway_method.proxy.http_method
-  integration_http_method = "POST"
-  type = "AWS"
-  uri = aws_lambda_function.demo33c.invoke_arn
-}
-
-resource aws_api_gateway_method_response proxy {
-  rest_api_id = aws_api_gateway_rest_api.demo33c.id
-  resource_id = aws_api_gateway_resource.demo33c_path1.id
-  http_method = aws_api_gateway_method.proxy.http_method
-  status_code = "200"
-}
-
-resource aws_api_gateway_integration_response proxy {
-  rest_api_id = aws_api_gateway_rest_api.demo33c.id
-  resource_id = aws_api_gateway_resource.demo33c_path1.id
-  http_method = aws_api_gateway_method.proxy.http_method
-  status_code = aws_api_gateway_method_response.proxy.status_code
-
-  depends_on = [
-    aws_api_gateway_method.proxy,
-    aws_api_gateway_integration.lambda_integration
-  ]
-}
-
+# -- deploy to new stage
 resource aws_api_gateway_deployment demo33c {
   depends_on = [
     aws_api_gateway_integration.lambda_integration,
   ]
   rest_api_id = aws_api_gateway_rest_api.demo33c.id
-  # stage_name = "demo33c-stage1"
 }
 
 resource aws_api_gateway_stage demo33c_stage1 {
   deployment_id = aws_api_gateway_deployment.demo33c.id
   rest_api_id   = aws_api_gateway_rest_api.demo33c.id
   stage_name    = "demo33c-stage1"
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.demo33c_apigw.arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      ip             = "$context.identity.sourceIp"
+      caller         = "$context.identity.caller"
+      user           = "$context.identity.user"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      resourcePath   = "$context.resourcePath"
+      status         = "$context.status"
+      protocol       = "$context.protocol"
+      responseLength = "$context.responseLength"
+    })
+  }
+
+  depends_on = [aws_api_gateway_account.demo33c]
 }
 
 resource aws_lambda_permission demo33c {
