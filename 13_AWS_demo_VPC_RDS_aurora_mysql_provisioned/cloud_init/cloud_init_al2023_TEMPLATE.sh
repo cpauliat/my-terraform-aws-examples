@@ -4,7 +4,7 @@
 exec 1> /var/log/cloud-init2.log 2>&1
 
 echo "========== Install some packages"
-yum install zsh mysql nmap -y
+dnf install zsh mariadb105-server nmap -y 
 
 # use $$ to ignore shell variable
 echo "========== Create a script to connect to MySQL Database"
@@ -15,7 +15,7 @@ chown ec2-user:ec2-user /home/ec2-user/mysql.sh
 chmod 700 /home/ec2-user/mysql.sh
 
 # echo "========== Install latest updates"
-# yum update -y
+# dnf update -y
 
 # echo "========== Final reboot"
 # reboot
