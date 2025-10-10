@@ -26,6 +26,7 @@ This Terraform project demonstrates a complete AWS infrastructure setup with VPC
 - Application Load Balancer with health checks
 - Path-based routing (`/mypath` for demonstration)
 - Cross-zone load balancing
+- Optional WAF WebACL for geographic access control
 
 ## Prerequisites
 
@@ -46,6 +47,7 @@ This Terraform project demonstrates a complete AWS infrastructure setup with VPC
    - CIDR blocks for VPC and subnets
    - Authorized IP addresses for SSH access
    - Instance types and availability zones
+   - WAF WebACL enablement (`alb_use_waf`)
 
 3. **Initialize Terraform**
    ```bash
@@ -75,7 +77,8 @@ This Terraform project demonstrates a complete AWS infrastructure setup with VPC
 | `07_ec2_instance_bastion.tf` | Bastion host configuration |
 | `08_ec2_instances_websrv.tf` | Web server instances |
 | `09_elb_alb.tf` | Application Load Balancer setup |
-| `10_outputs.tf` | Output values and SSH configuration |
+| `10_waf_webacl.tf` | WAF WebACL configuration (optional) |
+| `11_outputs.tf` | Output values and SSH configuration |
 
 ## Usage
 
@@ -109,6 +112,7 @@ sudo tail -f /var/log/httpd/access_log
 - Security groups with minimal required access
 - Auto-generated SSH key pairs
 - IP-based access restrictions
+- Optional WAF WebACL to restrict access by country (France only when enabled)
 
 ## Cloud-Init Scripts
 
