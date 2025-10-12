@@ -1,13 +1,13 @@
-# AWS VPC with RDS Aurora MySQL Provisioned Demo
+# AWS VPC with RDS Aurora MySQL Serverless v1 Demo
 
-This Terraform project demonstrates AWS RDS Aurora MySQL cluster deployment with provisioned instances and an EC2 instance configured as a database client in a VPC.
+This Terraform project demonstrates AWS RDS Aurora MySQL Serverless v1 deployment with automatic scaling and an EC2 instance configured as a database client in a VPC.
 
 ## Architecture Overview
 
 - **VPC** with public and private subnets across multiple availability zones
-- **RDS Aurora MySQL Cluster** with provisioned instances (1 writer + 2 readers)
+- **RDS Aurora MySQL Serverless v1** with automatic scaling and pause capability
 - **EC2 instance** configured as MySQL client with database tools
-- **High availability** deployment across 3 availability zones
+- **Cost-optimized** serverless architecture that scales to zero when idle
 
 ## Infrastructure Components
 
@@ -19,14 +19,14 @@ This Terraform project demonstrates AWS RDS Aurora MySQL cluster deployment with
 - Security groups for database and client access
 
 ### Database
-- **Aurora MySQL Cluster**: Provisioned with 3 instances
-- **High Availability**: Writer and reader instances across AZs
+- **Aurora MySQL Serverless v1**: Auto-scaling database cluster
+- **Auto-pause**: Automatically pauses after 5 minutes of inactivity
+- **Scaling Configuration**: Min 2 ACUs, Max 256 ACUs
 - **Automated backups**: 5-day retention with preferred backup window
-- **Maintenance window**: Scheduled maintenance configuration
 - **Private access**: Database accessible only within VPC
 
 ### Compute
-- **EC2 Client Instance**: Amazon Linux 2023 with MySQL client tools
+- **EC2 Client Instance**: Amazon Linux 2 with MySQL client tools
 - **MySQL Client**: Pre-installed for Aurora connectivity
 - **Elastic IP**: Persistent public IP for SSH access
 
@@ -48,8 +48,8 @@ This Terraform project demonstrates AWS RDS Aurora MySQL cluster deployment with
    - AWS region and availability zones
    - VPC and subnet CIDR blocks
    - Authorized IP addresses for SSH access
-   - Aurora MySQL configuration (cluster identifier, version, instance class)
-   - Database name and storage settings
+   - Aurora MySQL configuration (cluster identifier, version)
+   - Database name and scaling settings
    - Instance type and SSH key paths
 
 3. **Initialize Terraform**
@@ -76,7 +76,7 @@ This Terraform project demonstrates AWS RDS Aurora MySQL cluster deployment with
 | `03_network.tf` | VPC and networking components |
 | `04_data_sources.tf` | AWS data sources |
 | `05_ssh_key_pair.tf` | SSH key pair configuration |
-| `06_rds_aurora_mysql.tf` | Aurora MySQL cluster configuration |
+| `06_rds_aurora_mysql_serverless_v1.tf` | Aurora Serverless v1 configuration |
 | `07_instance_linux_db_client.tf` | EC2 client instance |
 | `08_outputs.tf` | Output values and connection instructions |
 
@@ -97,10 +97,10 @@ Once connected to the EC2 instance:
 # Set password environment variable
 export MYSQL_PASSWD="<generated_password>"
 
-# Connect to Aurora MySQL cluster
+# Connect to Aurora MySQL Serverless cluster
 ./mysql.sh
 
-# Test database connectivity
+# Test database connectivity (may take time to wake up from pause)
 mysql> SHOW DATABASES;
 mysql> USE <database_name>;
 mysql> SHOW TABLES;
@@ -135,15 +135,15 @@ SELECT * FROM tblEmployee;
 - Encrypted EBS volumes
 - VPC-only database connectivity
 
-## Aurora MySQL Configuration
+## Aurora Serverless v1 Configuration
 
-- **Engine**: Aurora MySQL (configurable version)
-- **Cluster**: 1 writer + 2 reader instances
-- **Instance Class**: Configurable (e.g., db.r6g.large)
-- **Multi-AZ**: Deployed across 3 availability zones
+- **Engine**: Aurora MySQL Serverless v1
+- **Engine Mode**: Serverless (v1)
+- **Scaling**: 2-256 Aurora Capacity Units (ACUs)
+- **Auto-pause**: Enabled after 5 minutes of inactivity
+- **Timeout Action**: Force apply capacity changes
 - **Backups**: 5-day retention with preferred backup window
-- **Maintenance**: Scheduled maintenance window
-- **High Availability**: Automatic failover capability
+- **Cost Optimization**: Pay only for actual usage
 
 ## Cloud-Init Features
 
@@ -151,11 +151,25 @@ SELECT * FROM tblEmployee;
 - **Connection Script**: Ready-to-use database connection script
 - **Network Tools**: Additional utilities for diagnostics
 
-## Additional Scripts
+## Upgrade Path to Serverless v2
 
-- **Version Discovery**: Scripts to list available Aurora engine versions
-- **list_versions_v1.sh**: Lists Aurora engine versions
-- **list_versions_v2_v3.sh**: Lists Aurora MySQL versions
+The project includes upgrade scripts in the `_upgrade_serverless_v1_to_v2/` directory:
+
+1. **Create Parameter Group**: `1_create_attach_new_param_group.sh`
+2. **Convert to Provisioned**: `2_convert_serverless_v1_to_provisioned.sh`
+3. **Blue-Green Upgrade**: `3_blue_green_upgrade_mysql_from_5.7_to_8.0.sh`
+4. **Convert to Serverless v2**: `4_convert_provisioned_to_serverless_v2.sh`
+5. **Failover**: `5_failover_green_cluster_to_serverless_v2.sh`
+6. **Cleanup**: `6_green_cluster_delete_provisioned_instance.sh`
+7. **Final Failover**: `7_blue_green_failover.sh`
+8. **Blue-Green Cleanup**: `8_blue_green_cleanup.sh`
+
+## Important Notes
+
+- **Cold Start**: First connection after pause may take 15-30 seconds
+- **Serverless v1 Limitations**: Limited to MySQL 5.7, deprecated in favor of v2
+- **Auto-pause**: Database pauses automatically to save costs
+- **Scaling**: Automatic scaling based on workload demand
 
 ## Cleanup
 
@@ -167,9 +181,8 @@ terraform destroy
 ## Notes
 
 - Database password is randomly generated and displayed in Terraform output
-- Aurora cluster provides high availability with automatic failover
-- Reader instances can be used for read-only workloads
-- Database is accessible only from within the VPC for security
-- Perfect for production-like MySQL workloads requiring high availability
-- Consider Aurora Serverless for variable workloads
-- Monitor costs as Aurora provisioned instances run continuously
+- Aurora Serverless v1 automatically scales based on demand
+- Database pauses when idle to minimize costs
+- Perfect for development, testing, and variable workloads
+- Consider migrating to Aurora Serverless v2 for production workloads
+- Serverless v1 is deprecated and not recommended for new deployments
