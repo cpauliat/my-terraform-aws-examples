@@ -42,7 +42,7 @@ This Terraform project demonstrates AWS infrastructure setup with VPC, EC2 insta
    - AWS region
    - CIDR blocks for VPC and subnet
    - Authorized IP addresses for SSH access
-   - Instance type and availability zone
+   - Instance type, architecture (x86_64/arm64), and availability zone
 
 3. **Initialize Terraform**
    ```bash
@@ -70,6 +70,7 @@ This Terraform project demonstrates AWS infrastructure setup with VPC, EC2 insta
 | `05_ssh_key_pair.tf` | SSH key generation |
 | `06_iam_role_for_cloudwatch.tf` | IAM role for CloudWatch access |
 | `07_instance_linux.tf` | EC2 instance configuration |
+| `cloud_init/cloud_init_al2.sh` | Instance initialization script |
 
 ## Usage
 
@@ -77,7 +78,7 @@ After deployment, wait a few minutes for the cloud-init scripts to complete, the
 
 ### SSH Access
 ```bash
-ssh -i sshkeys_generated/ssh_key_demo17.priv ec2-user@<INSTANCE-PUBLIC-IP>
+ssh -i sshkeys_generated/ssh_key_demo17 ec2-user@<INSTANCE-PUBLIC-IP>
 ```
 
 ### Generate Load for Testing
@@ -95,10 +96,10 @@ ssh -i sshkeys_generated/ssh_key_demo17.priv ec2-user@<INSTANCE-PUBLIC-IP>
 ### CloudWatch Agent Management
 ```bash
 # Check agent status
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -c ssm:AmazonCloudWatch-linux -a query
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -a query
 
 # Restart agent
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -c ssm:AmazonCloudWatch-linux -a restart
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -a restart
 ```
 
 ## Security Features
@@ -111,9 +112,10 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -c 
 ## Cloud-Init Scripts
 
 - Installs monitoring tools (zsh, nmap, stress-ng)
-- Installs and configures CloudWatch agent
-- Sets up stress testing capabilities
-- Starts CloudWatch agent service
+- Installs and configures CloudWatch agent with custom configuration
+- Sets up stress testing capabilities with memory and CPU load generation
+- Configures CloudWatch agent to collect memory, swap, and process metrics
+- Starts CloudWatch agent service automatically
 
 ## Cleanup
 
@@ -125,7 +127,9 @@ terraform destroy
 ## Notes
 
 - SSH keys are automatically generated in the `sshkeys_generated/` directory
-- CloudWatch agent automatically collects system metrics
+- CloudWatch agent uses custom configuration for enhanced monitoring
 - The instance includes stress-ng for load testing scenarios
 - Metrics appear in CloudWatch under "CWAgent" namespace
-- Agent uses default configuration for comprehensive monitoring
+- Agent collects memory usage, swap usage, and process metrics
+- AWS caller identity is logged to `aws-whoami.log` during deployment
+- Supports both x86_64 and arm64 architectures
