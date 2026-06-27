@@ -23,12 +23,12 @@ variable "nb_instances" {
   description = "Number of EC2 instances"
 }
 variable "inst_private_ip" {
-  type        = string
-  description = "Private IP address for the EC2 instance"
+  type        = list(string)
+  description = "List of private IP addresses for the EC2 instances"
 }
 variable "inst_private_ip_efa" {
-  type        = string
-  description = "Private IP address for the EC2 instance"
+  type        = list(string)
+  description = "List of private IP addresses for EFA interfaces"
 }
 variable "inst_type" {
   type        = string
