@@ -1,3 +1,6 @@
+# ---- Get AWS account ID
+data "aws_caller_identity" "current" {}
+
 # ---- AMI for AL2023 x86_64 architecture
 data "aws_ami" "al2023_x64" {
   most_recent = true
@@ -23,8 +26,4 @@ data "aws_ami" "al2023_arm64" {
 # ---- Get the right AMI based on arch variable
 locals {
   ami = (var.arch == "arm64") ? data.aws_ami.al2023_arm64.id : data.aws_ami.al2023_x64.id
-}
-
-output "ami" {
-  value = local.ami
 }
