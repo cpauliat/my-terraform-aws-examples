@@ -36,7 +36,7 @@ resource "aws_instance" "demo12b_al2023" {
 }
 
 # ------ Copy local SQL scripts to EC2 instance
-resource "null_resource" "copy_sql" {
+resource "terraform_data" "copy_sql" {
   # The instance attachment does not create a dependency on the separately
   # managed SSH rule, so wait for that rule before opening the SSH connection.
   depends_on = [aws_vpc_security_group_ingress_rule.demo12b_ec2_ingress_ssh_0]
