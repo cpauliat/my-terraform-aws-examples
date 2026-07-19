@@ -37,7 +37,7 @@ resource "aws_instance" "cr3_r1_bastion" {
 }
 
 # ------ Post provisioning by remote-exec
-resource "null_resource" "cr3_bastion" {
+resource "terraform_data" "cr3_bastion" {
 
   provisioner "file" {
     connection {

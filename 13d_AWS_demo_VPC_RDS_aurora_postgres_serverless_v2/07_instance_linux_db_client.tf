@@ -35,7 +35,7 @@ resource "aws_instance" "demo13d_db_client" {
 }
 
 # ------ Copy local SQL scripts to EC2 instance
-resource "null_resource" "copy_sql" {
+resource "terraform_data" "copy_sql" {
   provisioner "file" {
     connection {
       host        = aws_eip.demo13d_db_client.public_ip
