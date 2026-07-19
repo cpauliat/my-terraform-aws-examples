@@ -35,7 +35,7 @@ resource "aws_instance" "demo11b_al2023" {
 }
 
 # ------ Copy scripts to EC2 instance
-resource "null_resource" "demo11b" {
+resource "terraform_data" "demo11b" {
 
   connection {
     agent       = false

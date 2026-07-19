@@ -43,7 +43,7 @@ resource "aws_security_group" "cr3_sg_r2" {
 }
 
 # ------ Post provisioning by remote-exec
-resource "null_resource" "cr3_r2_dr" {
+resource "terraform_data" "cr3_r2_dr" {
 
   provisioner "file" {
     connection {
