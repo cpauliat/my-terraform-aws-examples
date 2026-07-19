@@ -11,10 +11,10 @@ curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /home/
 
 echo "========== Create a script to connect to MySQL Database"
 cat << EOF > /home/ec2-user/mysql.sh
-mysql -u ${param_user} -h ${param_hostname}
+mysql -u ${param_user} -p -h ${param_hostname}
 EOF
 cat << EOF > /home/ec2-user/mysql_enc.sh
-mysql -u ${param_user} -h ${param_hostname} --ssl-ca=global-bundle.pem --ssl-verify-server-cert
+mysql -u ${param_user} -p -h ${param_hostname} --ssl-ca=global-bundle.pem --ssl-verify-server-cert
 EOF
 chown ec2-user:ec2-user /home/ec2-user/mysql.sh /home/ec2-user/mysql_enc.sh
 chmod 700 /home/ec2-user/mysql.sh /home/ec2-user/mysql_enc.sh
