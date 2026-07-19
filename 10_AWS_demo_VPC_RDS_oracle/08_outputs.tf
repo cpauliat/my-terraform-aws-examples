@@ -8,7 +8,7 @@ output "Instructions" {
 
 
 ---- You can SSH directly to the Linux instance with Oracle Instance Client by typing the following ssh command
-ssh -i ${var.private_sshkey_path} ${local.username}@${aws_eip.demo10_al2.public_ip}
+ssh -i ${var.private_sshkey_path} ${local.username}@${aws_eip.demo10_al2023.public_ip}
 
 ---- Once connected, you can connect to the Oracle database using sqlplus with following command
 ./sqlplus.sh
